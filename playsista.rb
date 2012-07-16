@@ -8,6 +8,19 @@ Twitter.configure do |config|
   config.oauth_token_secret = ENV["OAUTH_TOKEN_SECRET"]
 end
 
+Trans = { 'January' => 'Janvier',
+          'February' => 'Fevrier',
+          'March' => 'Mars',
+          'April' => 'Avril',
+          'May' => 'Mai',
+          'June' => 'Juin',
+          'July' => 'Juillet',
+          'August' => 'Aout',
+          'September' => 'Septembre',
+          'October' => 'Octobre',
+          'November' => 'Novembre',
+          'December' => 'Decembre'}
+
 def save_last_rt(last_rt_id)
   begin
     open("last_rt_id.txt", "w") do |f|
@@ -39,7 +52,7 @@ end
 
 def search(month, last_id)
   new_last_id = nil
-  Twitter.search("spotify playlist " + month, :rpp => 50, :result_type => "recent", :include_entities => true).results.map do |s|
+  Twitter.search("spotify playlist #{month} OR #{Trans[month]}", :rpp => 100, :result_type => "recent", :include_entities => true).results.map do |s|
     break if s.id == last_id
     unless s.text =~ /.*RT.*/ or s.urls.empty?
       puts "[#{s.id}][#{s.from_user}]:", "#{s.text}"
@@ -59,10 +72,10 @@ if $0 == __FILE__
   last_id = load_last_rt
   current_month = Time.now.localtime.strftime("%B")
   puts " * Current month is " + current_month
-  puts " * Last retweet is #{last_id}"
+  puts " * Last retweet was #{last_id}"
   new_last_id = search(current_month, last_id)
   last_id = new_last_id if new_last_id
-  puts "LATEST: #{last_id}"
+  puts " * Last retweet is now #{last_id}"
   save_last_rt(last_id)
 end
 
