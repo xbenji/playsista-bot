@@ -42,27 +42,32 @@ def load_last_rt
   end
 end
 
-def extract_playlists_url(text)
-  URI::extract(text, "http").each do |u|
-    open(u) do |h|
-      yield h.base_uri
-    end
-  end
+def is_spotify_pl_url(url)
+  url =~ /http:\/\/open\.spotify\.com\/user\/.+\/playlist\/.+/
 end
 
 def search(month, last_id)
   new_last_id = nil
+
   Twitter.search("spotify playlist #{month} OR #{Trans[month]}", :rpp => 100, :result_type => "recent", :include_entities => true).results.map do |s|
     break if s.id == last_id
+    has_valid_pl_url = false
+
     unless s.text =~ /.*RT.*/ or s.urls.empty?
-      puts "[#{s.id}][#{s.from_user}]:", "#{s.text}"
       s.urls.each do |url|
         open(url.expanded_url) do |final_url|
-          puts "URL:" + final_url.base_uri.to_s
+          s_url = final_url.base_uri.to_s
+          has_valid_pl_url = true if is_spotify_pl_url s_url
+          puts s_url if has_valid_pl_url
         end
       end
-      Twitter.retweet(s.id)
+
+      if has_valid_pl_url
+        Twitter.retweet(s.id)
+      end
+
       new_last_id ||= s.id
+
     end
   end
   new_last_id
@@ -78,4 +83,3 @@ if $0 == __FILE__
   puts " * Last retweet is now #{last_id}"
   save_last_rt(last_id)
 end
-
