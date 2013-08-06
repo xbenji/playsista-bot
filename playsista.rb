@@ -55,10 +55,14 @@ def search(month, last_id)
 
     unless s.text =~ /.*RT.*/ or s.urls.empty?
       s.urls.each do |url|
-        open(url.expanded_url) do |final_url|
-          s_url = final_url.base_uri.to_s
-          has_valid_pl_url = true if is_spotify_pl_url s_url
-          puts s_url if has_valid_pl_url
+        begin
+          open(url.expanded_url) do |final_url|
+            s_url = final_url.base_uri.to_s
+            has_valid_pl_url = true if is_spotify_pl_url s_url
+            puts s_url if has_valid_pl_url
+          end
+        rescue
+          puts "failed"
         end
       end
 
